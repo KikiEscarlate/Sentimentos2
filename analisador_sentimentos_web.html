@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador de Sentimentos - Projeto Educacional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        #resultado {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+
+        .resultado-header {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .frase-analisada {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-style: italic;
+            border-left: 4px solid #667eea;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .positivo { color: #4caf50; }
+        .negativo { color: #f44336; }
+        .neutro { color: #ff9800; }
+
+        .palavras-encontradas {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin: 3px;
+            font-size: 0.85rem;
+        }
+
+        .badge-positivo {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-negativo {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .sentimento-final {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .sentimento-final.positivo {
+            background: linear-gradient(135deg, #a8e6cf 0%, #56ab2f 100%);
+            color: white;
+        }
+
+        .sentimento-final.negativo {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .sentimento-final.neutro {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .radio-label input {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .dicionario-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-box .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .stat-box .label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .dicionario-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>❤️ Analisador de Sentimentos</h1>
+        <p class="subtitle">Projeto Educacional - Turma de Engenharia de Software</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="mudarAba('analisar')">📊 Analisar Frase</button>
+            <button class="tab" onclick="mudarAba('adicionar')">➕ Adicionar Palavra</button>
+            <button class="tab" onclick="mudarAba('estatisticas')">📈 Estatísticas</button>
+            <button class="tab" onclick="mudarAba('historico')">📚 Histórico</button>
+        </div>
+
+        <div id="aba-analisar" class="tab-content active">
+            <div class="input-group">
+                <label for="textoInput">Digite sua frase:</label>
+                <textarea id="textoInput" placeholder="Exemplo: Hoje o dia está maravilhoso, estou muito feliz!"></textarea>
+            </div>
+            <button class="btn-primary" onclick="analisarFrase()">Analisar Sentimento</button>
+
+            <div id="resultado">
+                <div class="resultado-header">Resultado da Análise:</div>
+                <div class="frase-analisada" id="fraseAnalisada"></div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div>📉 Palavras Positivas</div>
+                        <div class="stat-number positivo" id="contPositivas">0</div>
+                        <div class="palavras-encontradas" id="listPositivas"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div>📈 Palavras Negativas</div>
+                        <div class="stat-number negativo" id="contNegativas">0</div>
+                        <div class="palavras-encontradas" id="listNegativas"></div>
+                    </div>
+                </div>
+
+                <div class="sentimento-final" id="sentimentoFinal"></div>
+            </div>
+        </div>
+
+        <div id="aba-adicionar" class="tab-content">
+            <div class="input-group">
+                <label for="novaPalavra">Nova palavra:</label>
+                <input type="text" id="novaPalavra" placeholder="Digite a palavra...">
+            </div>
+
+            <div class="input-group">
+                <label for="pesoPalavra">Peso da palavra (1-3):</label>
+                <input type="number" id="pesoPalavra" min="1" max="3" value="1" placeholder="1">
+            </div>
+
+            <div class="input-group">
+                <label>Tipo de sentimento:</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="tipo" value="positiva" checked>
+                        👍 Positiva
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="tipo" value="negativa">
+                        👎 Negativa
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="adicionarPalavra()">Adicionar ao Dicionário</button>
+
+            <div class="alert" id="alerta"></div>
+        </div>
+
+        <div id="aba-estatisticas" class="tab-content">
+            <div class="dicionario-stats">
+                <div class="stat-box">
+                    <div class="label">Palavras Positivas</div>
+                    <span class="number positivo" id="totalPositivas">0</span>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Palavras Negativas</div>
+                    <span class="number negativo" id="totalNegativas">0</span>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Total Geral</div>
+                    <span class="number" id="totalGeral">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="aba-historico" class="tab-content">
+            <div class="input-group">
+                <button class="btn-primary" onclick="exportarHistorico()">📥 Exportar Histórico (CSV)</button>
+            </div>
+            <div id="historico-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let historico = [];
+
+        let palavrasPositivas = {
+            "feliz": 2, "alegre": 2, "ótimo": 3, "excelente": 3, "maravilhoso": 3, "bom": 1, "amor": 3,
+            "adorar": 2, "incrível": 3, "fantástico": 3, "perfeito": 3, "legal": 1, "bacana": 1,
+            "sucesso": 2, "vitória": 2, "paz": 2, "amizade": 2, "sorrir": 1, "esperança": 2, "lindo": 2,
+            "bonito": 2, "agradável": 1, "divertido": 1, "animado": 1, "satisfeito": 2, "grato": 2,
+            "ótimo": 3, "sensacional": 3, "espetacular": 3, "genial": 2, "brilhante": 2, "magnífico": 3,
+            "delicioso": 2, "gostoso": 1, "saboroso": 2, "rico": 1, "fresco": 1, "limpo": 1,
+            "saudável": 2, "forte": 1, "poderoso": 2, "inteligente": 2, "esperto": 1, "criativo": 2,
+            "talentoso": 2, "habilidoso": 1, "competente": 1, "confiante": 2, "corajoso": 2,
+            "generoso": 2, "amável": 1, "gentil": 1, "carinhoso": 2, "afetuoso": 2, "leal": 2,
+            "honesto": 1, "sincero": 1, "justo": 1, "responsável": 1, "disciplinado": 1, "empolgado": 2, "apaixonado": 3,
+        };
+
+        let palavrasNegativas = {
+            "triste": 2, "ruim": 1, "péssimo": 3, "horrível": 3, "terrível": 3, "ódio": 3, "odiar": 2,
+            "chorar": 1, "fracasso": 2, "derrota": 2, "medo": 2, "raiva": 2, "feio": 1, "chato": 1,
+            "desagradável": 1, "entediado": 1, "frustrado": 2, "decepcionado": 2, "cansado": 1,
+            "preocupado": 1, "ansioso": 2, "difícil": 1, "problema": 1, "mal": 1, "infeliz": 2,
+            "horrível": 3, "detestável": 3, "repugnante": 3, "nojento": 2, "sujo": 1, "imundo": 2,
+            "doente": 2, "enfermo": 1, "fraco": 1, "débil": 1, "burro": 2, "idiota": 3, "estúpido": 2,
+            "incompetente": 2, "incapaz": 1, "preguiçoso": 1, "mentiroso": 2, "traidor": 3, "desleal": 2,
+            "cruel": 3, "maldoso": 2, "egoísta": 1, "ganancioso": 1, "invejoso": 1, "ciumento": 1,
+            "agressivo": 2, "violento": 2, "perigoso": 2, "ameaçador": 2, "assustador": 2
+        };
+
+        function limparTexto(texto) {
+            return texto.toLowerCase().replace(/[.,!?;:()\-\"'…]/g, "");
+        }
+
+        function analisarFrase() {
+            const texto = document.getElementById('textoInput').value.trim();
+
+            if (!texto) {
+                alert("Por favor, digite uma frase!");
+                return;
+            }
+
+            const textoLimpo = limparTexto(texto);
+            const palavras = textoLimpo.split(/\s+/);
+
+            let scorePos = 0;
+            let scoreNeg = 0;
+            const posEncontradas = [];
+            const negEncontradas = [];
+
+            palavras.forEach(palavra => {
+                if (palavrasPositivas[palavra]) {
+                    scorePos += palavrasPositivas[palavra];
+                    posEncontradas.push(`${palavra}(${palavrasPositivas[palavra]})`);
+                } else if (palavrasNegativas[palavra]) {
+                    scoreNeg += palavrasNegativas[palavra];
+                    negEncontradas.push(`${palavra}(${palavrasNegativas[palavra]})`);
+                }
+            });
+
+            const totalScore = scorePos - scoreNeg;
+            const confidence = Math.min(Math.abs(totalScore) / 10, 1) * 100; // Simple confidence based on score
+
+            document.getElementById('fraseAnalisada').textContent = `"${texto}"`;
+            document.getElementById('contPositivas').textContent = scorePos;
+            document.getElementById('contNegativas').textContent = scoreNeg;
+
+            const listPos = document.getElementById('listPositivas');
+            const listNeg = document.getElementById('listNegativas');
+
+            listPos.innerHTML = posEncontradas.length > 0
+                ? posEncontradas.map(p => `<span class="badge badge-positivo">${p}</span>`).join('')
+                : '';
+
+            listNeg.innerHTML = negEncontradas.length > 0
+                ? negEncontradas.map(p => `<span class="badge badge-negativo">${p}</span>`).join('')
+                : '';
+
+            const finalDiv = document.getElementById('sentimentoFinal');
+            let sentimento;
+            if (totalScore > 0) {
+                sentimento = `😊 POSITIVO (Confiança: ${confidence.toFixed(1)}%)`;
+                finalDiv.className = "sentimento-final positivo";
+            } else if (totalScore < 0) {
+                sentimento = `😞 NEGATIVO (Confiança: ${confidence.toFixed(1)}%)`;
+                finalDiv.className = "sentimento-final negativo";
+            } else {
+                sentimento = "😐 NEUTRO";
+                finalDiv.className = "sentimento-final neutro";
+            }
+            finalDiv.textContent = sentimento;
+
+            // Save to history
+            salvarHistorico(texto, scorePos, scoreNeg, totalScore, sentimento);
+
+            document.getElementById('resultado').style.display = 'block';
+        }
+
+        function adicionarPalavra() {
+            const palavra = document.getElementById('novaPalavra').value.trim().toLowerCase();
+            const tipo = document.querySelector('input[name="tipo"]:checked').value;
+            const peso = parseInt(document.getElementById('pesoPalavra').value) || 1;
+            const alerta = document.getElementById('alerta');
+
+            if (!palavra) {
+                mostrarAlerta("Digite uma palavra!", "error");
+                return;
+            }
+
+            if (palavrasPositivas[palavra] || palavrasNegativas[palavra]) {
+                mostrarAlerta(`A palavra "${palavra}" já existe no dicionário!`, "error");
+                return;
+            }
+
+            if (tipo === "positiva") {
+                palavrasPositivas[palavra] = peso;
+                mostrarAlerta(`Palavra "${palavra}" (${peso}) adicionada às POSITIVAS! 👍`, "success");
+            } else {
+                palavrasNegativas[palavra] = peso;
+                mostrarAlerta(`Palavra "${palavra}" (${peso}) adicionada às NEGATIVAS! 👎`, "success");
+            }
+
+            document.getElementById('novaPalavra').value = '';
+            document.getElementById('pesoPalavra').value = '1';
+            atualizarEstatisticas();
+        }
+
+        function mostrarAlerta(mensagem, tipo) {
+            const alerta = document.getElementById('alerta');
+            alerta.textContent = mensagem;
+            alerta.className = `alert ${tipo}`;
+            alerta.style.display = 'block';
+
+            setTimeout(() => {
+                alerta.style.display = 'none';
+            }, 4000);
+        }
+
+        function salvarHistorico(texto, scorePos, scoreNeg, totalScore, sentimento) {
+            const data = new Date().toLocaleString();
+            historico.push({
+                data: data,
+                texto: texto,
+                positivas: scorePos,
+                negativas: scoreNeg,
+                total: totalScore,
+                sentimento: sentimento
+            });
+        }
+
+        function mostrarHistorico() {
+            const list = document.getElementById('historico-list');
+            if (historico.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #666;">Nenhum histórico disponível.</p>';
+                return;
+            }
+
+            list.innerHTML = historico.map((item, index) => `
+                <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="font-weight: bold; color: #667eea; margin-bottom: 5px;">${item.data}</div>
+                    <div style="font-style: italic; margin-bottom: 10px;">"${item.texto}"</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="color: #4caf50;">Positivas: ${item.positivas}</span> | 
+                            <span style="color: #f44336;">Negativas: ${item.negativas}</span> | 
+                            <span>Total: ${item.total}</span>
+                        </div>
+                        <div style="font-weight: bold;">${item.sentimento}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exportarHistorico() {
+            if (historico.length === 0) {
+                alert("Nenhum histórico para exportar!");
+                return;
+            }
+
+            let csv = "Data,Texto,Positivas,Negativas,Total,Sentimento\n";
+            historico.forEach(item => {
+                csv += `"${item.data}","${item.texto.replace(/"/g, '""')}",${item.positivas},${item.negativas},${item.total},"${item.sentimento}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "historico_analises.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function mudarAba(aba) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(`aba-${aba}`).classList.add('active');
+
+            if (aba === 'estatisticas') {
+                atualizarEstatisticas();
+            } else if (aba === 'historico') {
+                mostrarHistorico();
+            }
+        }
+
+        function atualizarEstatisticas() {
+            document.getElementById('totalPositivas').textContent = Object.keys(palavrasPositivas).length;
+            document.getElementById('totalNegativas').textContent = Object.keys(palavrasNegativas).length;
+            document.getElementById('totalGeral').textContent = Object.keys(palavrasPositivas).length + Object.keys(palavrasNegativas).length;
+        }
+
+        atualizarEstatisticas();
+    </script>
+</body>
+</html>
